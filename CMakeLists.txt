@@ -1,38 +1,71 @@
+###############################################################################
+# CMakeLists.txt — Minimal Google‑Test setup for Apple‑silicon (arm64 only)
+###############################################################################
 cmake_minimum_required(VERSION 3.20)
-project(Tododist LANGUAGES CXX)
 
-# 2‑line comfort‑boilerplate
-set(CMAKE_CXX_STANDARD 20)
+# ---------------------------------------------------------------------------
+# 1.  Force the generator and compiler to target arm64 before *anything* else.
+#    (Remove the CACHE line if you want a universal binary later.)
+# ---------------------------------------------------------------------------
+set(CMAKE_OSX_ARCHITECTURES arm64 CACHE STRING "" FORCE)
+
+project(MyProject VERSION 0.1 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)              # Request C++20
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-# --- Production library --------------------------------------------------
+# ---------------------------------------------------------------------------
+# 2.  Production library (replace with your real sources)
+# ->  Because my_lib publishes src/ as a PUBLIC include dir, 
+#     every target that links against my_lib (here unit_tests) 
+#     inherits that include path.
+# ---------------------------------------------------------------------------
 add_library(my_lib
-  src/add.cpp        # implementation
-  src/add.h          # header (optional to list, but nice for IDEs)
+    src/task.cpp
+    src/task.hpp
+    src/task_manager.cpp
+    src/task_manager.hpp
 )
-
 target_include_directories(my_lib PUBLIC src)
 
-# --- GoogleTest via FetchContent -----------------------------------------
+# ---------------------------------------------------------------------------
+# 3.  Google Test via FetchContent (downloads & builds for arm64)
+# ---------------------------------------------------------------------------
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        v1.14.0           # pin a release; update when you wish
+  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
 )
-# Prevent GoogleTest from adding its own gtest/gmock tests
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)   # MSVC runtime tweak
-FetchContent_MakeAvailable(googletest)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)  # no‑op on macOS
+FetchContent_MakeAvailable(googletest)              # <<< builds gtest/gmock
 
-enable_testing()   # must come *after* FetchContent_MakeAvailable
+# ---------------------------------------------------------------------------
+# 4.  Enable CTest *after* gtest is available
+# ---------------------------------------------------------------------------
+enable_testing()
 
-# --- Test executable -----------------------------------------------------
-add_executable(unit_tests tests/add_test.cpp)
+# ---------------------------------------------------------------------------
+# 5.  Unit‑test executable
+# ---------------------------------------------------------------------------
+file(GLOB TEST_SOURCES tests/*.cpp)
+
+add_executable(unit_tests ${TEST_SOURCES})
 target_link_libraries(unit_tests
     PRIVATE
-        my_lib           # code under test
-        gtest_main       # GoogleTest entry point
+        my_lib
+        GTest::gtest         # testing symbols
+        GTest::gtest_main    # main() + pulls in gtest again on macOS
 )
 
 include(GoogleTest)
-gtest_discover_tests(unit_tests)   # ctest auto‑discovers tests
+gtest_discover_tests(unit_tests)
+
+# ---------------------------------------------------------------------------
+# 6.  Convenience target: `make run-tests` or `cmake --build . --target run-tests`
+# ---------------------------------------------------------------------------
+add_custom_target(run-tests
+    COMMAND ctest --output-on-failure
+    DEPENDS unit_tests
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
