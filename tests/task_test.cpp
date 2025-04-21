@@ -32,7 +32,7 @@ TEST(TaskCtor, TaskWithDueDate) {
   // Create a fake due date
   Task t(1, "PA 2", Priority::Low, today);
   EXPECT_EQ(t.id, 1);
-  EXPECT_EQ(t.title, "PA 1");
+  EXPECT_EQ(t.title, "PA 2");
   EXPECT_EQ(t.pr, Priority::Low);
   EXPECT_EQ(t.state, Status::Pending);
   // Now the optional should be engaged
@@ -51,8 +51,17 @@ TEST(TaskManagerError, BlankTitle) {
   EXPECT_THROW(mgr.add("", Priority::Low), invalid_argument);
 }
 
-// TEST(TaskManagerSize, SingleTask) {
-//   TaskManager mgr;
-//   int id = mgr.add("Write code", Priority::High);
-//   EXPECT_EQ(mgr.size(), 1u);
-// }
+TEST(TaskManagerSize, SingleTask) {
+  TaskManager mgr;
+  int id = mgr.add("Write code", Priority::High);
+  EXPECT_EQ(mgr.size(), 1u);
+}
+
+TEST(TaskManagerSize, AddThenDeleteTask) {
+  TaskManager mgr;
+  int id = mgr.add("PA3", Priority::High);
+  EXPECT_EQ(mgr.size(), 1u);
+  bool success = mgr.remove(id);
+  EXPECT_EQ(success, true);
+  EXPECT_EQ(mgr.size(), 0);
+}

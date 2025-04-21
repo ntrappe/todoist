@@ -14,6 +14,8 @@ public:
   int add(const std::string &title,
           Priority pr = Priority::Medium,
           std::optional<ymd> due = std::nullopt);
+  bool complete(int id);
+  bool remove(int id);
 
   size_t size() const;
 
