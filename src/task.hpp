@@ -10,10 +10,20 @@
 
 enum class Priority { Low = 0,
                       Medium,
-                      High };
+                      High,
+                      Critical };
 enum class Status { Pending,
                     Completed,
                     Archived };
+
+static constexpr char const *RED = "\033[91m";
+static constexpr char const *GREEN = "\033[32m";
+static constexpr char const *BLUE = "\033[34m";
+static constexpr char const *YELLOW = "\033[33m";
+static constexpr char const *RESET = "\033[0m";
+
+// Declare the stream-insertion overloads
+std::ostream &operator<<(std::ostream &out, Priority p);
 
 using ymd = std::chrono::year_month_day;
 
