@@ -22,10 +22,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 #     inherits that include path.
 # ---------------------------------------------------------------------------
 add_library(my_lib
-    src/task.cpp
-    src/task.hpp
-    src/task_manager.cpp
-    src/task_manager.hpp
+  src/task.cpp
+  src/task.hpp
+  src/task_manager.cpp
+  src/task_manager.hpp
+  src/task_cli.cpp
+  src/task_cli.hpp
 )
 target_include_directories(my_lib PUBLIC src)
 
@@ -52,20 +54,26 @@ file(GLOB TEST_SOURCES tests/*.cpp)
 
 add_executable(unit_tests ${TEST_SOURCES})
 target_link_libraries(unit_tests
-    PRIVATE
-        my_lib
-        GTest::gtest         # testing symbols
-        GTest::gtest_main    # main() + pulls in gtest again on macOS
+  PRIVATE
+    my_lib
+    GTest::gtest         # testing symbols
+    GTest::gtest_main    # main() + pulls in gtest again on macOS
 )
 
 include(GoogleTest)
 gtest_discover_tests(unit_tests)
 
 # ---------------------------------------------------------------------------
-# 6.  Convenience target: `make run-tests` or `cmake --build . --target run-tests`
+# 6.  CBuild the CLI binary
+# ---------------------------------------------------------------------------
+add_executable(taskmaster src/main.cpp)
+target_link_libraries(taskmaster PRIVATE my_lib)
+
+# ---------------------------------------------------------------------------
+# 7.  Convenience target: `make run-tests` or `cmake --build . --target run-tests`
 # ---------------------------------------------------------------------------
 add_custom_target(run-tests
-    COMMAND ctest --output-on-failure
-    DEPENDS unit_tests
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  COMMAND ctest --output-on-failure
+  DEPENDS unit_tests
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
