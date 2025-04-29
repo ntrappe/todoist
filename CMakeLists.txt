@@ -66,8 +66,8 @@ gtest_discover_tests(unit_tests)
 # ---------------------------------------------------------------------------
 # 6.  CBuild the CLI binary
 # ---------------------------------------------------------------------------
-add_executable(taskmaster src/main.cpp)
-target_link_libraries(taskmaster PRIVATE my_lib)
+add_executable(todo src/main.cpp)
+target_link_libraries(todo PRIVATE my_lib)
 
 # ---------------------------------------------------------------------------
 # 7.  Convenience target: `make run-tests` or `cmake --build . --target run-tests`

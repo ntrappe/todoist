@@ -7,6 +7,8 @@
 #include <queue>
 #include <unordered_map>
 
+static int RECENT = 7;
+
 // Only visible to task_manager.cpp. Helper function for compat.
 static std::string to_string(const std::chrono::year_month_day &ymd) {
   return std::format("{:%F}", ymd);
@@ -29,7 +31,7 @@ public:
    * @param id Unique identifier for the task
    * @return False if id unknown. True if successful.
    */
-  bool complete(int id);
+  bool completeTask(int id);
 
   /**
    * Removes the task entirely.
@@ -37,9 +39,7 @@ public:
    * @param id Unique identifier for the task
    * @return False if id unknown. True if successful.
    */
-  bool remove(int id);
-
-  void printHeap(std::ostream &out = std::cout) const;
+  bool removeTask(int id);
 
   /**
    * Retrieves and removes the highest‐priority pending Task from the heap.
@@ -51,23 +51,6 @@ public:
 
   void printTasks(std::ostream &out = std::cout);
 
-  /**
-   * Utility: check if task is overdue. Uses a reference so we have a non-null
-   * guarantee. Overdue should be a derived-property not status.
-   *
-   * @param task Reference to a valid Task.
-   * @param today Current year_month_day.
-   * @return True if overdue. Otherwise, false.
-   */
-  static bool is_overdue(const Task &task, const ymd &today) {
-    return task.due.has_value() && (task.state == Status::Pending) && (task.due.value() < today);
-  }
-
-  static ymd get_today() {
-    auto now = std::chrono::system_clock::now();
-    return std::chrono::floor<std::chrono::days>(now);
-  }
-
   static double effective_score(const Task &task, int threshold) {
     // Map priority to an int [1, 4]
     int base_pr = static_cast<int>(task.pr) + 1;
@@ -77,11 +60,12 @@ public:
       return static_cast<double>(base_pr);
 
     // Compute days remaining, clamped to [0, threshold]
+    // If a task is overdue (delta < 0), so aging_norm becomes >1.
     const auto today = std::chrono::sys_days{get_today()};
     const auto delta = (std::chrono::sys_days{task.due.value()} - today).count();
 
     // Normalize aging by diving by threshold, clamped to [0 .. 1]
-    double aging_norm = static_cast<double>(threshold - delta) / threshold;
+    double aging_norm = std::clamp(static_cast<double>(threshold - delta) / threshold, 0.0, 1.0);
 
     // Combine base priority with how soon it's due
     return base_pr + aging_norm;
@@ -104,16 +88,9 @@ private:
    */
   struct PriorityCmp {
     bool operator()(const Task *a, const Task *b) const noexcept {
-      // const ymd today = TaskManager::get_today();
-
-      // if (TaskManager::is_overdue(*a, today) && !TaskManager::is_overdue(*b, today)) {
-      //   return false;
-      // } else if (!TaskManager::is_overdue(*a, today) && TaskManager::is_overdue(*b, today)) {
-      //   return true;
-      // } else {
-      //   return true;
-      // }
-      return true;
+      double score_a = effective_score(*a, RECENT);
+      double score_b = effective_score(*b, RECENT);
+      return score_a < score_b; // true when a less important than b
     }
   };
 

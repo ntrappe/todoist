@@ -23,10 +23,11 @@ void TaskCLI::run(int argc, char *argv[]) {
 
       // Task *secondTask = mgr.next();
       // cout << "added task [" << secondTask->id << "] " << secondTask->title << endl;
-      cout << "... added " << static_cast<int>(mgr.size()) << " items\n\n";
       mgr.printTasks();
     } else if (cmd == "list") {
       cout << "you want to list them all" << endl;
+    } else if (cmd == "--help" || cmd == "help" || cmd == "-h") {
+      help();
     }
   } else {
     // Interactive mode
@@ -37,4 +38,14 @@ void TaskCLI::run(int argc, char *argv[]) {
         break;
     }
   }
+}
+
+void TaskCLI::help() {
+  cout << "todo <command>\n\nUsage:\n\n";
+  cout << "todo <command> -h\tquick help on <command>\n";
+  cout << "todo add\t\tadd a task to the list\n";
+  cout << "todo complete\t\tmark a task as complete\n";
+  cout << "todo edit\t\tedit a specific task\n";
+  cout << "todo list\t\tlist all pending tasks\n";
+  cout << "todo remove\t\tremove a specific task\n";
 }

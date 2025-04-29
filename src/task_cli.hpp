@@ -16,4 +16,6 @@ public:
   void handleRemove();
   void handleEdit();
   bool loadTasks();
+
+  void help();
 };
