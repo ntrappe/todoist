@@ -4,7 +4,7 @@
 
 using namespace std;
 
-string BLANK_DATE = "N/A\t";
+string BLANK_DATE = "None\t";
 int MAX_TASKS = 100;
 int WARN_TASKS = 90;
 

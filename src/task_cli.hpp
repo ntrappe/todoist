@@ -18,4 +18,5 @@ public:
   bool loadTasks();
 
   void help();
+  void help_add();
 };

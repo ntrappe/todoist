@@ -94,12 +94,6 @@ private:
     }
   };
 
-  //  A             B
-  //  Overdue       Overdue   -->
-  //  Overdue       X         --> A (false)
-  //  X             Overdue   --> B (true)
-  //  X             X         -->
-
   /**
    * Stores each Task. Owns them so uses unique_ptr.
    */

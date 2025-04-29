@@ -27,7 +27,11 @@ void TaskCLI::run(int argc, char *argv[]) {
     } else if (cmd == "list") {
       cout << "you want to list them all" << endl;
     } else if (cmd == "--help" || cmd == "help" || cmd == "-h") {
-      help();
+      if (args.size() > 1) {
+        help_add();
+      } else {
+        help();
+      }
     }
   } else {
     // Interactive mode
@@ -48,4 +52,12 @@ void TaskCLI::help() {
   cout << "todo edit\t\tedit a specific task\n";
   cout << "todo list\t\tlist all pending tasks\n";
   cout << "todo remove\t\tremove a specific task\n";
+}
+
+void TaskCLI::help_add() {
+  cout << "\n\nUsage: todo add <title> --priority <pr> --due <date>\n\n";
+  cout << "Shorthand: todo add <title> -p <pr> -d <date>\n\n";
+  cout << "Parameters:\n<title>\t\t(Mandatory) Name of the task.\n";
+  cout << "<pr>\t\t(Mandatory) How important the task is [low, medium, high, critical].\n";
+  cout << "<date>\t\t(Optional)  Due date of the task (YYYY-MM-DD).\n\n";
 }
