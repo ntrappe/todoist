@@ -167,7 +167,8 @@ int TaskCLI::run(int argc, char *argv[]) {
         mgr.printArchivedTasks();
         return EXIT_SUCCESS;
       } else {
-        cout << BLOOD << FAIL << " Argument not recognized." << RESET << endl;
+        cout << BLOOD << FAIL << " Argument not recognized." << RESET << endl
+             << endl;
         return EXIT_FAILURE;
       }
     } else if (cmd == "remove") {
@@ -210,7 +211,7 @@ int TaskCLI::run(int argc, char *argv[]) {
 
       // 3) Asking for help only
       if (strcasecmp(argv[TASK_ID_IDX], "help") == 0) {
-        // printArchiveHelp();
+        printArchiveHelp();
         return EXIT_FAILURE;
       }
 
@@ -231,6 +232,9 @@ int TaskCLI::run(int argc, char *argv[]) {
         cerr << "Error: failed to save tasks.json (" << e.what() << ")\n";
         return EXIT_FAILURE;
       }
+      return EXIT_SUCCESS;
+    } else if (cmd == "help") {
+      printHelp();
       return EXIT_SUCCESS;
     } else {
       cerr << BLOOD << FAIL << " Did not recognize command." << RESET << endl;

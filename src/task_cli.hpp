@@ -59,19 +59,18 @@ private:
   void printListHelp() {
     std::cout << NOTICE << "List tasks\n\nUsage:" << RESET << std::endl;
     std::cout << "./todo list [--all] [--completed] [--pending] "
-                 "[--priority <low|med|high|crit>]"
                  "\n\n"
-                 "List tasks, optionally filtered by status or priority."
+                 "List tasks, optionally filtered by status."
                  "\n\n";
     std::cout << NOTICE << "Options:" << RESET << std::endl;
-    std::cout << "  --all            Show all tasks (default)\n"
+    std::cout << "  --all            Show all tasks\n"
                  "  --completed      Show only completed tasks\n"
-                 "  --pending        Show only pending tasks\n"
-                 "  --priority <p>   Filter by priority (low, med, high, crit)\n"
+                 "  --pending        Show only pending tasks (default)\n"
                  "\n\n";
     std::cout << NOTICE << "Examples:" << RESET << std::endl;
     std::cout << "  ./todo list\n"
                  "  ./todo list --completed\n"
+                 "  ./todo list -a\n"
               << std::endl;
   }
 
@@ -86,6 +85,17 @@ private:
               << std::endl; // flush and keep prompt on its own line
   }
 
+  void printArchiveHelp() {
+    std::cout << NOTICE << "Archive a task\n\nUsage:" << RESET << std::endl;
+    std::cout << "./todo archive <ID>"
+                 "\n\n"
+                 "Mark the task with the given ID as archived.\n"
+                 "\n";
+    std::cout << NOTICE << "Example:" << RESET << std::endl;
+    std::cout << "  ./todo archive 2\n"
+              << std::endl; // flush and keep prompt on its own line
+  }
+
   void printRemoveHelp() {
     std::cout << NOTICE << "Remove a task\n\nUsage:" << RESET << std::endl;
     std::cout << "./todo remove <ID>"
@@ -95,6 +105,21 @@ private:
     std::cout << NOTICE << "Example:" << RESET << std::endl;
     std::cout << "  ./todo remove 5\n"
               << std::endl; // flush and keep prompt on its own line
+  }
+
+  void printHelp() {
+    std::cout << NOTICE << "Task Manager CLI\n\nUsage:" << RESET << std::endl;
+    std::cout << "./todo <command> [options]\n\n";
+
+    std::cout << NOTICE << "Commands:" << RESET << std::endl;
+    std::cout << "  add        Add a new task\n"
+                 "  archive     Delete a task\n"
+                 "  complete   Mark a task as completed\n"
+                 "  help       Show this help, or detailed help for a subcommand\n"
+                 "  list       List tasks (pending by default; see ’all’, ’completed’, ’archived’)\n"
+                 "  remove     Delete a task\n\n";
+
+    std::cout << "Run './todo help <command>' for more information on a specific command.\n";
   }
 
   /**

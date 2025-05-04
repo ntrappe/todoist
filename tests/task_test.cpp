@@ -49,7 +49,7 @@ TEST(TaskManagerSize, EmptyMgr) {
 
 TEST(TaskManagerError, BlankTitle) {
   TaskManager mgr;
-  EXPECT_THROW(mgr.addTask("", Priority::Low), invalid_argument);
+  EXPECT_EQ(mgr.addTask("", Priority::Low), -1);
 }
 
 TEST(TaskManagerSize, SingleTask) {
