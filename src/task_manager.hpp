@@ -8,10 +8,21 @@
 #include <unordered_map>
 
 static int RECENT = 7;
+const int FXN_FAILURE = -1;
+
+using day = std::chrono::day;
+using month = std::chrono::month;
+using year = std::chrono::year;
 
 // Only visible to task_manager.cpp. Helper function for compat.
 static std::string to_string(const std::chrono::year_month_day &ymd) {
   return std::format("{:%F}", ymd);
+}
+
+static std::chrono::year_month_day to_ymd(const std::string &in) {
+  int y, m, d;
+  int r = sscanf(in.c_str(), "%d-%d-%d", &y, &m, &d);
+  return ymd{year{y}, month{static_cast<unsigned>(m)}, day{static_cast<unsigned>(d)}};
 }
 
 class TaskManager {
@@ -42,14 +53,32 @@ public:
   bool removeTask(int id);
 
   /**
+   * Archives the task.
+   *
+   * @param id Unique identifier for the task
+   * @return False if id unknown. True if successful.
+   */
+  bool archiveTask(int id);
+
+  void printTasks(Status filter = Status::Pending);
+
+  // Convenience wrappers
+  void printAllTasks() { printTasks(Status::All); }
+  void printPendingTasks() { printTasks(Status::Pending); }
+  void printCompletedTasks() { printTasks(Status::Completed); }
+  void printArchivedTasks() { printTasks(Status::Archived); }
+
+  bool loadFromFile(const std::string &filename = "tasks.json");
+
+  bool saveToFile(const std::string &filename = "tasks.json") const;
+
+  /**
    * Retrieves and removes the highest‐priority pending Task from the heap.
    * Implements lazy deletion of any tasks that have since been completed/removed.
    *
    * @return Pointer to the next pending Task, or nullptr if no pending tasks.
    */
   Task *next();
-
-  void printTasks(std::ostream &out = std::cout);
 
   static double effective_score(const Task &task, int threshold) {
     // Map priority to an int [1, 4]
@@ -107,6 +136,9 @@ private:
 
   int next_id;
 
-  std::string TASK_TABLE_HEADER = "ID\tPRIORITY\tDUE\t\tTITLE\n";
-  std::string TABLE_SEPARATOR = "------------------------------------------------------------------\n";
+  // Assumes all validation is already done. This is a low-level insertion routine.
+  int insertTaskUnchecked(int id, const std::string &title, Priority pr, std::optional<ymd> due);
+
+  /// Format a single task’s due date column.
+  std::string formatDue(const Task *task, const ymd &today) const;
 };

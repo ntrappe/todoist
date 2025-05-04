@@ -14,36 +14,34 @@ enum class Priority { Low = 0,
                       Critical };
 enum class Status { Pending,
                     Completed,
-                    Archived };
+                    Archived,
+                    All };
 
 /* ANSI text styles */
 static constexpr char const *BOLD = "\033[1m";
+static constexpr char const *NOTICE = "\e[1;35m";
 static constexpr char const *BLOOD = "\033[31m";
-static constexpr char const *BLUE = "\033[34m";
 static constexpr char const *CYAN = "\033[36m";
 static constexpr char const *GOLD = "\033[33m";
 static constexpr char const *GREEN = "\033[32m";
 static constexpr char const *MAGENTA = "\033[35m";
 static constexpr char const *RED = "\033[91m";
-static constexpr char const *YELLOW = "\033[93m";
+static constexpr char const *BG_BLACK = "\033[40m";
+static constexpr char const *BG_MAGENTA = "\033[45m";
 static constexpr char const *RESET = "\033[0m";
 
 /* Symbols */
-static constexpr char const *LOW_PR = "☀️";
-static constexpr char const *MED_PR = "🌤️";
-static constexpr char const *HIGH_PR = "🌧️";
-static constexpr char const *CRI_PR = "🔥";
 static constexpr char const *WARN = "⚠️";
 static constexpr char const *FAIL = "⛔️";
 static constexpr char const *DONE = "✅";
 
 /* Numerical constants */
-static constexpr size_t TITLE_MAX_LEN = 30;
-
-// Declare the stream-insertion overloads
-std::ostream &operator<<(std::ostream &out, Priority p);
+static constexpr size_t TITLE_MAX_LEN = 35;
 
 using ymd = std::chrono::year_month_day;
+
+// Declare the stream-insertion overloads
+// std::ostream &operator<<(std::ostream &out, Priority p);
 
 struct Task {
   // ---------- data members ----------
@@ -95,3 +93,21 @@ bool is_overdue(const Task &task, const ymd &today);
  * @return A possibly shortened version with ellipsis.
  */
 std::string truncate(const std::string &title);
+
+std::string print_priority(Priority p);
+
+/**
+ * @brief   Convert an ISO‑8601 string into a year_month_day.
+ * @param   date A string in “YYYY‑MM‑DD” format.
+ * @return  A year_month_day object.
+ * @throws  std::invalid_argument if invalid format.
+ */
+ymd string_to_ymd(const std::string &date);
+
+/**
+ * @brief   Convert a year_month_day into an ISO‑8601 date string.
+ * @param   date  A year_month_day object to stringify.
+ * @return  A string in “YYYY‑MM‑DD” format.
+ * @throws  std::invalid_argument if the provided date is not a valid ymd.
+ */
+std::string ymd_to_string(const ymd &date);

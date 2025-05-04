@@ -1,7 +1,15 @@
 #include "task.hpp"
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 
 using namespace std;
 using namespace chrono;
+
+const std::string PRIORITY_BLOCK[4] = {
+    "\e[0;104m \033[0m", "\e[0;107m \033[0m", "\e[0;105m \033[0m", "\e[0;101m \033[0m"};
 
 // ctor
 Task::Task(int i, string t, Priority p, optional<ymd> d)
@@ -34,8 +42,47 @@ ymd get_today() {
   return floor<days>(now);
 }
 
-ostream &operator<<(ostream &out, Priority p) {
-  switch (p) {
+// ymd string_to_ymd(const string &date) {
+//   int y, m, d;
+//   if (sscanf(date.c_str(), "%d-%d-%d", &y, &m, &d) == 3) {
+//     return ymd{year{y}, month{static_cast<unsigned>(m)}, day{static_cast<unsigned>(d)}};
+//   } else {
+//     throw invalid_argument("Invalid date format: " + date);
+//   }
+// }
+
+// string ymd_to_string(const ymd &date) {
+//   if (!date.ok()) {
+//     throw invalid_argument("Invalid year_month_day");
+//   }
+
+//   int y = int(date.year());
+//   unsigned m = unsigned(date.month());
+//   unsigned d = unsigned(date.day());
+
+//   ostringstream oss;
+//   oss << setfill('0')
+//       << setw(4) << y << '-'
+//       << setw(2) << m << '-'
+//       << setw(2) << d;
+
+//   return oss.str();
+// }
+
+string print_priority(Priority p) {
+  string bar;
+  int total_blocks = 8;
+  int painted_blocks = (static_cast<int>(p) + 1) * 2;
+
+  for (int i = 0; i < total_blocks; i++, painted_blocks--) {
+    if (painted_blocks > 0)
+      bar += PRIORITY_BLOCK[static_cast<int>(p)];
+    else
+      bar += "\033[40m \033[0m"; // Unfilled block with black background
+  }
+  return bar; // Safe: returning by value
+
+  // switch (p) {
   // case Priority::Low:
   //   return out << LOW_PR << '\t';
   // case Priority::Medium:
@@ -52,15 +99,15 @@ ostream &operator<<(ostream &out, Priority p) {
   //   return out << BOLD << GOLD << "!!!" << RESET;
   // case Priority::Critical:
   //   return out << BOLD << MAGENTA << "!!!!" << RESET;
-  case Priority::Low:
-    return out << "🟢\t";
-  case Priority::Medium:
-    return out << "🔵\t";
-  case Priority::High:
-    return out << "🟠\t";
-  case Priority::Critical:
-    return out << "🔴\t";
-  default:
-    return out << "--\t";
-  }
+  // case Priority::Low:
+  //   return out << "🟢\t";
+  // case Priority::Medium:
+  //   return out << "🔵\t";
+  // case Priority::High:
+  //   return out << "🟠\t";
+  // case Priority::Critical:
+  //   return out << "🔴\t";
+  // default:
+  //   return out << "--\t";
+  // }
 }

@@ -1,4 +1,5 @@
 #include "task.hpp"
+#include "task_cli.hpp"
 #include "task_manager.hpp"
 #include <gtest/gtest.h>
 
@@ -66,13 +67,6 @@ TEST(TaskManagerSize, AddThenDeleteTask) {
   EXPECT_EQ(mgr.size(), 0);
 }
 
-TEST(Utilities, GetToday) {
-  TaskManager mgr;
-  ymd today = get_today();
-  EXPECT_EQ(static_cast<int>(today.year()), 2025);
-  EXPECT_EQ(static_cast<unsigned>(today.month()), 4);
-}
-
 TEST(Utilities, IsOverdue) {
   TaskManager mgr;
   Task t(5, "Think harder", Priority::Low, today);
@@ -98,17 +92,48 @@ TEST(Utilities, IsDuePast) {
   EXPECT_LT(t.days_until_due(), -1);
 }
 
-// TEST(TaskManagerList, PrettyPrint) {
-//   TaskManager mgr;
-//   mgr.addTask("Write code for PA1", Priority::High, ymd(2025y, chrono::June, 21d));
-//   mgr.addTask("Review pull requests for PA1", Priority::Low, ymd(2025y, chrono::June, 28d));
-//   mgr.addTask("Read 'Design of Everyday Things'", Priority::Medium, ymd(2025y, chrono::September, 11d));
+TEST(Utilities, ParseDate1) {
+  TaskCLI cli;
+  auto date_opt = cli.parseDate("2025-10-10");
+  auto expected = ymd(2025y, chrono::October, 10d);
+  EXPECT_EQ(date_opt.value(), expected);
+}
 
-//   cout << "now start print\n";
-//   ostringstream oss;
-//   mgr.printHeap(oss);
-//   cout << "finished call to printheap\n";
-//   // cout << "now echo output\n";
-//   // SUCCEED() << oss.str();
-//   EXPECT_EQ(1 + 2, 3);
-// }
+TEST(Utilities, ParseDate2) {
+  TaskCLI cli;
+  auto date_opt = cli.parseDate("2025-01-03");
+  auto expected = ymd(2025y, chrono::January, 3d);
+  EXPECT_EQ(date_opt.value(), expected);
+}
+
+TEST(Utilities, ParseDate3) {
+  TaskCLI cli;
+  auto date_opt = cli.parseDate("2025-3-31");
+  auto expected = ymd(2025y, chrono::March, 31d);
+  EXPECT_EQ(date_opt.value(), expected);
+}
+
+TEST(Utilities, ParseDateInvalid) {
+  TaskCLI cli;
+  auto date_opt = cli.parseDate("2025-200-31");
+  auto expected = ymd(2025y, chrono::March, 31d);
+  EXPECT_EQ(date_opt, nullopt);
+}
+
+TEST(Utilities, ParsePriority1) {
+  TaskCLI cli;
+  auto pr = cli.parsePriority("low");
+  EXPECT_EQ(pr, Priority::Low);
+}
+
+TEST(Utilities, ParsePriority2) {
+  TaskCLI cli;
+  auto pr = cli.parsePriority("medium");
+  EXPECT_EQ(pr, Priority::Medium);
+}
+
+TEST(Utilities, ParsePriority3) {
+  TaskCLI cli;
+  auto pr = cli.parsePriority("yeet");
+  EXPECT_EQ(pr, Priority::Medium);
+}
