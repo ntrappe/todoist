@@ -1,6 +1,11 @@
 /**
- * File:    task.hpp
- * Purpose: Plain data record for one to‑do item.
+ * @file    task.hpp
+ * @author  Nicole Trappe
+ * @date    2025‑05‑04
+ * @brief   Core Task data structure and utility functions for TaskMaster++.
+ *
+ * This header defines the Task record, its operations (equality, due‑date math),
+ * and standalone helpers for date parsing/formatting, title truncation, etc.
  */
 #pragma once
 #include <chrono>
@@ -8,10 +13,22 @@
 #include <string>
 #include <vector>
 
+// Shortcut for C++20 chrono date type YYYY‑MM‑DD
+using ymd = std::chrono::year_month_day;
+
+/**
+ * @enum Priority
+ * @brief Levels of task urgency.
+ */
 enum class Priority { Low = 0,
                       Medium,
                       High,
                       Critical };
+
+/**
+ * @enum Status
+ * @brief Lifecycle state of a task.
+ */
 enum class Status { Pending,
                     Completed,
                     Archived,
@@ -21,10 +38,8 @@ enum class Status { Pending,
 static constexpr char const *BOLD = "\033[1m";
 static constexpr char const *NOTICE = "\e[1;35m";
 static constexpr char const *BLOOD = "\033[31m";
-static constexpr char const *CYAN = "\033[36m";
 static constexpr char const *GOLD = "\033[33m";
 static constexpr char const *GREEN = "\033[32m";
-static constexpr char const *MAGENTA = "\033[35m";
 static constexpr char const *RED = "\033[91m";
 static constexpr char const *BG_BLACK = "\033[40m";
 static constexpr char const *BG_MAGENTA = "\033[45m";
@@ -35,10 +50,8 @@ static constexpr char const *WARN = "⚠️";
 static constexpr char const *FAIL = "⛔️";
 static constexpr char const *DONE = "✅";
 
-/* Numerical constants */
+/* Maximum length of title before truncation */
 static constexpr size_t TITLE_MAX_LEN = 35;
-
-using ymd = std::chrono::year_month_day;
 
 // Declare the stream-insertion overloads
 // std::ostream &operator<<(std::ostream &out, Priority p);
@@ -51,20 +64,35 @@ struct Task {
   Status state{Status::Pending};
   std::optional<ymd> due{std::nullopt};
 
-  // std::vector<std::string> tags;
-  // sys_seconds created;
-  // std::optional<sys_seconds> completed;
+  /**
+   * @brief  Default constructor (invalid id of -1).
+   */
+  Task() = default;
 
-  Task() = default; // leaves id = -1 (invalid)
-
+  /**
+   * @brief  Construct a fully‑specified task.
+   * @param  id     Unique identifier to assign.
+   * @param  title  Text description.
+   * @param  pr     Priority level (default: Medium).
+   * @param  due    Optional due date.
+   */
   Task(int id,
        std::string title,
        Priority pr = Priority::Medium,
        std::optional<ymd> due = std::nullopt);
 
-  // Member signature. Overload equals operator.
+  /**
+   * @brief  Equality comparison (ID, title, priority, state).
+   * @param  other  Task to compare against.
+   * @return true if key members match.
+   */
   bool operator==(const Task &other) const;
 
+  /**
+   * @brief  Compute days remaining until the due date.
+   * @return Number of days (may be negative if overdue).
+   * @throws std::bad_optional_access if no due date is set.
+   */
   int days_until_due() const;
 };
 
@@ -72,42 +100,28 @@ struct Task {
 
 /**
  * Gets today's date as a year_month_day (YYYY-MM-DD).
- *
  * @return Today's date.
  */
 ymd get_today();
 
 /**
- * Returns true if the task's due date has passed compared to today.
- *
- * @param task The task to check.
- * @param today The current date to compare against.
- * @return true if overdue, false otherwise.
+ * @brief   Check if a pending task’s due date has passed.
+ * @param   task   The Task under test.
+ * @param   today  Reference date for comparison.
+ * @return  true if task.due < today and state is Pending.
  */
 bool is_overdue(const Task &task, const ymd &today);
 
 /**
- * Truncates a title to a maximum length, adding "..." if too long.
- *
- * @param title The original title string.
- * @return A possibly shortened version with ellipsis.
+ * @brief   Truncate a title to fit within TITLE_MAX_LEN.
+ * @param   title  Original title.
+ * @return  Possibly‑shortened string, with "..." suffix if truncated.
  */
 std::string truncate(const std::string &title);
 
+/**
+ * @brief   Render a visual priority bar.
+ * @param   p  Priority enum to draw.
+ * @return  A string of colored blocks.
+ */
 std::string print_priority(Priority p);
-
-/**
- * @brief   Convert an ISO‑8601 string into a year_month_day.
- * @param   date A string in “YYYY‑MM‑DD” format.
- * @return  A year_month_day object.
- * @throws  std::invalid_argument if invalid format.
- */
-ymd string_to_ymd(const std::string &date);
-
-/**
- * @brief   Convert a year_month_day into an ISO‑8601 date string.
- * @param   date  A year_month_day object to stringify.
- * @return  A string in “YYYY‑MM‑DD” format.
- * @throws  std::invalid_argument if the provided date is not a valid ymd.
- */
-std::string ymd_to_string(const ymd &date);
