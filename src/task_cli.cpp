@@ -2,8 +2,8 @@
 #include <algorithm>
 #include <chrono>
 #include <optional>
-#include <string>
 #include <string_view>
+#include <strings.h>
 
 using namespace std;
 using namespace std::chrono;

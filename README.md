@@ -31,14 +31,14 @@ Add a new task.
 ```ruby
 ./todo add "TITLE" [--priority <low|med|high|crit>] [--due YYYY-MM-DD]
 ```
-- **TITLE**: Task title (in quotes).
-- **--priority**: Task priority (default: med).
-- **--due**: Due date in ISO-8601 format.
+- **title**: Task title (in quotes).
+- **priority**: Task priority (default: med).
+- **due**: Due date in ISO-8601 format.
 
 ### list
 List tasks.
 ```ruby
-./todo list [all|completed|archived] [--priority <p>] [--due YYYY-MM-DD]
+./todo list [all|completed|archived]
 ```
 No subcommand (or list) shows pending tasks.
 
