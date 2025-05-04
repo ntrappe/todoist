@@ -1,3 +1,8 @@
+/**
+ * @file    task_manager.cpp
+ * @brief   Implements TaskManager methods for task lifecycle and persistence.
+ */
+
 #include "task_manager.hpp"
 #include <format>
 #include <fstream>
@@ -9,6 +14,9 @@ const string BLANK_DATE = "None";
 int MAX_TASKS = 100;
 int WARN_TASKS = 90;
 
+/**
+ * @brief  Validates if add is possible then passes to insertion function.
+ */
 int TaskManager::addTask(const string &title, Priority pr, optional<ymd> due) {
   // Empty title → reject immediately
   if (title.empty()) {
@@ -16,17 +24,15 @@ int TaskManager::addTask(const string &title, Priority pr, optional<ymd> due) {
     return FXN_FAILURE;
   }
 
-  int curr_num_tasks = static_cast<int>(size());
-
   // Check if it task cap (to avoid flooding)
-  if (curr_num_tasks >= MAX_TASKS) {
+  if ((int)size() >= MAX_TASKS) {
     cerr << BLOOD << FAIL << " Task limit reached (100). Cannot add more tasks." << RESET << endl;
     return FXN_FAILURE;
   }
 
   // Warn if approaching task cap
-  if (curr_num_tasks >= WARN_TASKS) {
-    cerr << GOLD << WARN << "  Warning: Approaching task limit (" << curr_num_tasks << "/100)." << RESET << endl;
+  if ((int)size() >= WARN_TASKS) {
+    cerr << GOLD << WARN << "  Warning: Approaching task limit (" << (int)size() << "/100)." << RESET << endl;
   }
 
   // Duplicate check
@@ -41,6 +47,9 @@ int TaskManager::addTask(const string &title, Priority pr, optional<ymd> due) {
   return insertTaskUnchecked(next_id++, title, pr, due);
 }
 
+/**
+ * @brief  Creates a task, inserts into the map, then pushes onto the heap.
+ */
 int TaskManager::insertTaskUnchecked(int id, const string &title, Priority pr, optional<ymd> due) {
   // Check for id collision (shouldn't happen, but just in case)
   if (task_map.contains(id)) {
@@ -67,21 +76,58 @@ int TaskManager::insertTaskUnchecked(int id, const string &title, Priority pr, o
   return id;
 }
 
-Task *TaskManager::next() {
-  // Pop until we find a stil-pending task or exhaust the heap
-  while (!task_heap.empty()) {
-    Task *task = task_heap.top();
-    task_heap.pop();
+/**
+ * @brief  Marks a task as complete.
+ */
+bool TaskManager::completeTask(int id) {
+  auto it = task_map.find(id);
 
-    if (task->state == Status::Pending)
-      return task;
+  if (it == task_map.end()) {
+    cerr << BLOOD << FAIL << " Could not find the task to complete." << RESET << endl;
+    return false;
   }
 
-  // Heap empty or exhausted
-  return nullptr;
+  Task *raw = it->second.get();
+  raw->state = Status::Completed;
+  return true;
 }
 
+/**
+ * @brief  Marks a task as archived.
+ */
+bool TaskManager::archiveTask(int id) {
+  auto it = task_map.find(id);
+
+  if (it == task_map.end()) {
+    cerr << BLOOD << FAIL << " Could not find the task to archive." << RESET << endl;
+    return false;
+  }
+
+  Task *raw = it->second.get();
+  raw->state = Status::Archived;
+  return true;
+}
+
+/**
+ * @brief  Removes task from map. Heap will pop off stale later.
+ */
+bool TaskManager::removeTask(int id) {
+  auto it = task_map.find(id);
+
+  if (it == task_map.end()) {
+    cerr << BLOOD << FAIL << " Could not find the task to remove." << RESET << endl;
+    return false;
+  }
+
+  task_map.erase(it);
+  return true;
+}
+
+/**
+ * @brief  String representing date or status if no date provided.
+ */
 string TaskManager::formatDue(const Task *task, const ymd &today) const {
+  // If no due date provided, say Completed, Archived, or None
   if (!task->due.has_value() && task->state == Status::Completed) {
     return GREEN + string("Completed") + RESET + string("\t\t");
   } else if (!task->due.has_value() && task->state == Status::Archived) {
@@ -101,6 +147,9 @@ string TaskManager::formatDue(const Task *task, const ymd &today) const {
   return out;
 }
 
+/**
+ * @brief  Outputs a table of all tasks.
+ */
 void TaskManager::printTasks(Status filter) {
   // 1) Header
   cout << BOLD << "\nID   PRIORITY\tDUE\t\t\tTITLE" << RESET << endl;
@@ -166,44 +215,9 @@ void TaskManager::printTasks(Status filter) {
   cout << BOLD << list.size() << " tasks " << label << ".\n\n";
 }
 
-bool TaskManager::completeTask(int id) {
-  auto it = task_map.find(id);
-
-  if (it == task_map.end()) {
-    cerr << BLOOD << FAIL << " Could not find the task to complete." << RESET << endl;
-    return false;
-  }
-
-  Task *raw = it->second.get();
-  raw->state = Status::Completed;
-  return true;
-}
-
-bool TaskManager::archiveTask(int id) {
-  auto it = task_map.find(id);
-
-  if (it == task_map.end()) {
-    cerr << BLOOD << FAIL << " Could not find the task to archive." << RESET << endl;
-    return false;
-  }
-
-  Task *raw = it->second.get();
-  raw->state = Status::Archived;
-  return true;
-}
-
-bool TaskManager::removeTask(int id) {
-  auto it = task_map.find(id);
-
-  if (it == task_map.end()) {
-    cerr << BLOOD << FAIL << " Could not find the task to remove." << RESET << endl;
-    return false;
-  }
-
-  task_map.erase(it);
-  return true;
-}
-
+/**
+ * @brief  If valid file, reads in contents as fields to construct Task.
+ */
 bool TaskManager::loadFromFile(const string &filename) {
   ifstream in(filename);
 
@@ -268,6 +282,9 @@ bool TaskManager::loadFromFile(const string &filename) {
   return true;
 }
 
+/**
+ * @brief  Writes each field of Task as a line in a JSON file.
+ */
 bool TaskManager::saveToFile(const string &filename) const {
   ofstream out(filename);
 
