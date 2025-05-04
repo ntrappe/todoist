@@ -10,7 +10,7 @@ A simple command-line to-do list manager written in modern C++20. It stores task
 - Persistent storage to tasks.json using JSON format.
 
 ## Setup & Build
-Ensure you have CMake and a C++20-compatible compiler installed.
+Ensure you have CMake and a C++20-compatible compiler installed. [^1]
 ```ruby
 # From project root:
 rm -rf build
@@ -23,7 +23,10 @@ The compiled binary is located at:
 ```ruby
 build/todo <command>
 ```
-You can run it directly from the build directory.
+You can also run the tests locally:
+```ruby
+build/unit_tests
+```
 
 ## Usage
 ### add
@@ -107,3 +110,41 @@ Without arguments, prints overall help.
 - **Ordering:** A `priority_queue<Task*, vector<Task*>, TaskComparator>` holds raw pointers into task_map so tasks can be listed by due date and priority without copying.
 - **Date handling:** Uses C++20’s `<chrono> year_month_day` for dates and helper functions to parse/stringify.
 - **Persistence:** `loadFromFile("tasks.json")` and `saveToFile("tasks.json")` wrap JSON serialization.
+
+## Tips
+> [!NOTE] To make building the project easier, create the following `.vscode/tasks.json` file. 
+> You can then just use **SHIFT + CTRL + B** in VS Code to automatically build.
+> 
+```ruby
+// .vscode/tasks.json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build", // ⇧⌘B  (or Ctrl+Shift+B) runs this
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        // 1) wipe old build, 2) configure, 3) compile
+        "rm -rf build && cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build"
+      ],
+      "problemMatcher": ["$gcc", "$msCompile"], // parse GCC/Clang/MSVC errors
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+
+    {
+      "label": "test",
+      "type": "shell",
+      "dependsOn": "build", // always (re)compile first
+      "command": "ctest",
+      "args": ["--test-dir", "build", "--output-on-failure"],
+      "problemMatcher": [],
+      "group": "test"
+    }
+  ]
+}
+```
