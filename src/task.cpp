@@ -48,7 +48,7 @@ int Task::days_until_due() const {
  * @brief  Return true if a Pending task’s due date is before today.
  */
 bool is_overdue(const Task &task, const ymd &today) {
-  return task.due.has_value() && (task.state == Status::Pending) && (task.due.value() < today);
+  return task.due.has_value() && (task.state != Status::Completed) && (task.due.value() < today);
 }
 
 /**
@@ -83,4 +83,17 @@ string print_priority(Priority p) {
       bar += "\033[40m \033[0m"; // Unfilled block with black background
   }
   return bar; // Safe: returning by value
+}
+
+string print_status(Status s) {
+  switch (s) {
+  case Status::Archived:
+    return "ARCHIVED";
+  case Status::Pending:
+    return "PENDING";
+  case Status::Completed:
+    return "COMPLETED";
+  default:
+    return "---";
+  }
 }

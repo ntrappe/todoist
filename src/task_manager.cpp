@@ -127,14 +127,9 @@ bool TaskManager::removeTask(int id) {
  * @brief  String representing date or status if no date provided.
  */
 string TaskManager::formatDue(const Task *task, const ymd &today) const {
-  // If no due date provided, say Completed, Archived, or None
-  if (!task->due.has_value() && task->state == Status::Completed) {
-    return GREEN + string("Completed") + RESET + string("\t\t");
-  } else if (!task->due.has_value() && task->state == Status::Archived) {
-    return GOLD + string("Archived") + RESET + string("\t\t");
-  } else if (!task->due.has_value()) {
+  // If no due date provided
+  if (!task->due.has_value())
     return BLANK_DATE + string("\t\t\t");
-  }
 
   // ISO date + color + overdue info
   string out = to_string(task->due.value()) + ' ';
@@ -152,8 +147,8 @@ string TaskManager::formatDue(const Task *task, const ymd &today) const {
  */
 void TaskManager::printTasks(Status filter) {
   // 1) Header
-  cout << BOLD << "\nID   PRIORITY\tDUE\t\t\tTITLE" << RESET << endl;
-  cout << "---------------------------------------------------------------------------" << endl;
+  cout << BOLD << "\nID   STATUS\tPRIORITY   DUE\t\t\tTITLE" << RESET << endl;
+  cout << "-----------------------------------------------------------------------------------" << endl;
 
   // 2) Gather matching tasks in heap order
   vector<Task *> list;
@@ -189,7 +184,8 @@ void TaskManager::printTasks(Status filter) {
     for (auto *task : list) {
       cout
           << "[" << task->id << "]  "
-          << print_priority(task->pr) << "\t"
+          << print_status(task->state) << "\t"
+          << print_priority(task->pr) << "   "
           << formatDue(task, get_today()) << RESET
           << truncate(task->title) << endl;
     }
@@ -211,7 +207,7 @@ void TaskManager::printTasks(Status filter) {
     label = "archived";
     break;
   }
-  cout << "---------------------------------------------------------------------------\n";
+  cout << "-----------------------------------------------------------------------------------\n";
   cout << BOLD << list.size() << " tasks " << label << ".\n\n";
 }
 

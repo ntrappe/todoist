@@ -125,3 +125,10 @@ std::string truncate(const std::string &title);
  * @return  A string of colored blocks.
  */
 std::string print_priority(Priority p);
+
+/**
+ * @brief   Print out word for status.
+ * @param   s  Status enum.
+ * @return  Text
+ */
+std::string print_status(Status s);

@@ -137,3 +137,35 @@ TEST(Utilities, ParsePriority3) {
   auto pr = cli.parsePriority("yeet");
   EXPECT_EQ(pr, Priority::Medium);
 }
+
+TEST(TaskManagerComplete, Nonexistent) {
+  TaskManager mgr;
+  EXPECT_FALSE(mgr.completeTask(42));
+}
+
+TEST(TaskManagerComplete, SetsState) {
+  TaskManager mgr;
+  int id = mgr.addTask("Test", Priority::Low);
+  ASSERT_TRUE(mgr.completeTask(id));
+  // We can’t access state directly, but listing completed should show it:
+  std::ostringstream oss;
+  testing::internal::CaptureStdout();
+  mgr.printCompletedTasks();
+  string out = testing::internal::GetCapturedStdout();
+  EXPECT_NE(out.find(std::to_string(id)), string::npos);
+}
+
+TEST(TaskManagerArchive, SetsState) {
+  TaskManager mgr;
+  int id = mgr.addTask("Archive me", Priority::Low);
+  ASSERT_TRUE(mgr.archiveTask(id));
+  testing::internal::CaptureStdout();
+  mgr.printArchivedTasks();
+  auto out = testing::internal::GetCapturedStdout();
+  EXPECT_NE(out.find(to_string(id)), string::npos);
+}
+
+TEST(TaskManagerRemove, Nonexistent) {
+  TaskManager mgr;
+  EXPECT_FALSE(mgr.removeTask(99));
+}
