@@ -1,42 +1,55 @@
+/**
+ * @file    task_cli.hpp
+ * @brief   Command-line interface for TaskMaster++. Parses user input,
+ *          dispatches commands to TaskManager, and handles persistence.
+ * @author  Nicole Trappe
+ * @date    2025-05-04
+ */
+
 #pragma once
 #include "task.hpp"
 #include "task_manager.hpp"
 #include <iostream>
 
-const int ADD_MIN_ARGS = 3;
-const int TITLE_IDX = 2;
-const int TASK_ID_IDX = 2;
+// Minimum number of arguments required for commands that need a parameter
+static constexpr int ADD_MIN_ARGS = 3;
+// Minimum number of arguments to include subcommand
+static constexpr int MIN_ARGS = 2;
+// Index of the title argument in argv for `add`
+static constexpr int TITLE_IDX = 2;
+// Index of the ID argument in argv for ID-based commands
+static constexpr int TASK_ID_IDX = 2;
 
 class TaskCLI {
 public:
   TaskCLI() {}
 
   /**
-   * @brief   Entry point for CLI commands.
-   * @param   argc  Argument count.
-   * @param   argv  Argument vector.
-   * @return  EXIT_SUCCESS on success; EXIT_FAILURE on error.
+   * @brief   Main entry point for the CLI. Loads tasks, interprets commands,
+   *          executes them, and saves on state-changing operations.
+   * @param   argc  Number of command-line arguments.
+   * @param   argv  Array of argument C-strings.
+   * @return  EXIT_SUCCESS on success; EXIT_FAILURE on error or invalid usage.
    */
   int run(int argc, char *argv[]);
 
   /**
-   * @brief   Parse a priority level from a string. Uses string_view bc it’s just a
-   *          pointer and a length, perfect for read‑only parsing.
-   * @param   txt  Text (e.g. "low", "med", "high", "critical").
-   * @return  The matching Priority enum; defaults to Priority::Medium if unrecognized.
+   * @brief   Convert a flag string into a Priority enum.
+   * @param   txt  Priority text ("low", "med", "high", "critical").
+   * @return  Matching Priority; defaults to Priority::Medium on failure.
    */
   Priority parsePriority(std::string_view txt);
 
   /**
-   * @brief   Parse an ISO‑8601 date string (YYYY‑MM‑DD).
-   * @param   in  Input string to parse.
-   * @return  Optional<year_month_day> containing the date if valid; nullopt otherwise.
+   * @brief   Parse an ISO-8601 date (YYYY-MM-DD) into ymd.
+   * @param   in  Date string to parse.
+   * @return  Optional<ymd> if valid; nullopt otherwise.
    */
   std::optional<ymd> parseDate(const std::string &in);
 
 private:
   /**
-   * @brief   Print usage/help for the `add` command.
+   * @brief   Display detailed help for the `add` command.
    */
   void printAddHelp() {
     std::cout << NOTICE << "Add a task\n\nUsage:" << RESET << std::endl;
@@ -56,24 +69,31 @@ private:
               << std::endl; // flush and keep prompt on its own line
   }
 
+  /**
+   * @brief   Display detailed help for the `list` command.
+   */
   void printListHelp() {
     std::cout << NOTICE << "List tasks\n\nUsage:" << RESET << std::endl;
-    std::cout << "./todo list [--all] [--completed] [--pending] "
+    std::cout << "./todo list [--all] [--completed] [--pending] [--archived] "
                  "\n\n"
                  "List tasks, optionally filtered by status."
                  "\n\n";
     std::cout << NOTICE << "Options:" << RESET << std::endl;
     std::cout << "  --all            Show all tasks\n"
+                 "  --archived       Show only archived tasks\n"
                  "  --completed      Show only completed tasks\n"
                  "  --pending        Show only pending tasks (default)\n"
                  "\n\n";
     std::cout << NOTICE << "Examples:" << RESET << std::endl;
     std::cout << "  ./todo list\n"
                  "  ./todo list --completed\n"
-                 "  ./todo list -a\n"
+                 "  ./todo list -r\n"
               << std::endl;
   }
 
+  /**
+   * @brief   Display detailed help for the `complete` command.
+   */
   void printCompleteHelp() {
     std::cout << NOTICE << "Complete a task\n\nUsage:" << RESET << std::endl;
     std::cout << "./todo complete <ID>"
@@ -85,6 +105,9 @@ private:
               << std::endl; // flush and keep prompt on its own line
   }
 
+  /**
+   * @brief   Display detailed help for the `archive` command.
+   */
   void printArchiveHelp() {
     std::cout << NOTICE << "Archive a task\n\nUsage:" << RESET << std::endl;
     std::cout << "./todo archive <ID>"
@@ -96,6 +119,9 @@ private:
               << std::endl; // flush and keep prompt on its own line
   }
 
+  /**
+   * @brief   Display detailed help for the `remove` command.
+   */
   void printRemoveHelp() {
     std::cout << NOTICE << "Remove a task\n\nUsage:" << RESET << std::endl;
     std::cout << "./todo remove <ID>"
@@ -107,30 +133,32 @@ private:
               << std::endl; // flush and keep prompt on its own line
   }
 
+  /**
+   * @brief   Display overall CLI usage and subcommands.
+   */
   void printHelp() {
     std::cout << NOTICE << "Task Manager CLI\n\nUsage:" << RESET << std::endl;
     std::cout << "./todo <command> [options]\n\n";
 
     std::cout << NOTICE << "Commands:" << RESET << std::endl;
     std::cout << "  add        Add a new task\n"
-                 "  archive     Delete a task\n"
+                 "  archive    Mark a task as archived\n"
                  "  complete   Mark a task as completed\n"
                  "  help       Show this help, or detailed help for a subcommand\n"
-                 "  list       List tasks (pending by default; see ’all’, ’completed’, ’archived’)\n"
+                 "  list       List tasks (pending by default)\n"
                  "  remove     Delete a task\n\n";
 
     std::cout << "Run './todo help <command>' for more information on a specific command.\n";
   }
 
   /**
-   * @brief   Parse arguments for the `add` command. Note that we're using references
-   *          instead of raw pointers to ensure we pass valid vars (no nullptr).
-   * @param   argc     Argument count.
-   * @param   argv     Argument vector.
-   * @param   title    (out) Receives the task title.
-   * @param   pr       (out) Receives the task priority.
-   * @param   due      (out) Receives the optional due date.
-   * @return  EXIT_SUCCESS if parsing succeeded; EXIT_FAILURE otherwise.
+   * @brief   Parse flags and values for the `add` command.
+   * @param   argc   Argument count.
+   * @param   argv   Argument vector.
+   * @param   title  (out) Parsed task title.
+   * @param   pr     (out) Parsed priority.
+   * @param   due    (out) Parsed due date.
+   * @return  EXIT_SUCCESS on success; EXIT_FAILURE on invalid flags or missing values.
    */
   int parseAdd(int argc, char *argv[],
                std::string &title,

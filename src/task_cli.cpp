@@ -1,3 +1,8 @@
+/**
+ * @file    task_cli.cpp
+ * @brief   Implements TaskCLI: argument parsing, command dispatch, and I/O.
+ */
+
 #include "task_cli.hpp"
 #include <algorithm>
 #include <chrono>
@@ -69,23 +74,34 @@ int TaskCLI::parseAdd(int argc, char *argv[],
   return EXIT_SUCCESS;
 }
 
+/**
+ * @brief  Main dispatch method: load, execute command, save if needed
+ */
 int TaskCLI::run(int argc, char *argv[]) {
   TaskManager mgr;
 
-  // 1) Load existing tasks (silently ignore if file is missing or malformed)
+  // Load previous state (first time running program, file doesn't exist)
   mgr.loadFromFile("tasks.json");
 
-  if (argc > 1) {
-    // One-shot mode
-    string_view cmd{argv[1]};
+  if (argc < MIN_ARGS) {
+    // No command provided
+    printHelp();
+    return EXIT_SUCCESS;
+  }
+
+  string_view cmd{argv[1]};
+  if (argc > 1) { // One-shot mode
     if (cmd == "add") {
-      // 2) Check for invalid usage
       if (argc < ADD_MIN_ARGS) {
         cerr << BLOOD << FAIL << " Adding a task requires at least 1 argument. None provided." << RESET << endl;
         return EXIT_FAILURE;
       }
+      if (strcasecmp(argv[TITLE_IDX], "help") == 0) {
+        printAddHelp();
+        return EXIT_SUCCESS;
+      }
 
-      // 3) Parse the add arguments into these locals
+      // Parse the add arguments into these locals
       string title = "";
       Priority pr = Priority::Medium;
       optional<ymd> due_opt = nullopt;
@@ -93,22 +109,16 @@ int TaskCLI::run(int argc, char *argv[]) {
       if (parseAdd(argc, argv, title, pr, due_opt) != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
-      // 4) Create the task in the manager and report its new ID
+      // Create the task in the manager and report its new ID
       int id = mgr.addTask(title, pr, due_opt);
       if (id == FXN_FAILURE)
         return EXIT_FAILURE;
 
-      cout << NOTICE << DONE << " Successfully add task #"
-           << id << " (\"" << truncate(title) << "\")." << RESET << endl
-           << endl;
+      cout << NOTICE << DONE << " Successfully add task #" << id << ": "
+           << truncate(title) << "." << RESET << "\n\n";
 
-      // 5) Save the updated task list back to disk
-      try {
-        mgr.saveToFile("tasks.json");
-      } catch (const exception &e) {
-        cerr << "Error: failed to save tasks.json (" << e.what() << ")\n";
-        return EXIT_FAILURE;
-      }
+      // Save updated task list back to disk
+      mgr.saveToFile("tasks.json");
       return EXIT_SUCCESS;
     } else if (cmd == "complete") {
       // 2) Check for invalid usage
@@ -116,14 +126,12 @@ int TaskCLI::run(int argc, char *argv[]) {
         cerr << BLOOD << FAIL << " Completing a task requires at least 1 argument. None provided." << RESET << endl;
         return EXIT_FAILURE;
       }
-
-      // 3) Asking for help only
       if (strcasecmp(argv[TASK_ID_IDX], "help") == 0) {
         printCompleteHelp();
         return EXIT_FAILURE;
       }
 
-      // 4) Extract ID and change to complete
+      // Extract ID and change to complete
       int id = atoi(argv[TASK_ID_IDX]);
       if (id == 0 || !mgr.completeTask(id)) {
         return EXIT_FAILURE;
@@ -133,23 +141,15 @@ int TaskCLI::run(int argc, char *argv[]) {
              << endl;
       }
 
-      // 5) Save the updated task list back to disk
-      try {
-        mgr.saveToFile("tasks.json");
-      } catch (const exception &e) {
-        cerr << "Error: failed to save tasks.json (" << e.what() << ")\n";
-        return EXIT_FAILURE;
-      }
+      mgr.saveToFile("tasks.json");
       return EXIT_SUCCESS;
-
     } else if (cmd == "list") {
-      // 2) by default, just list will show pending
-      if (argc < 3) {
+      // By default, just list will show pending
+      if (argc < ADD_MIN_ARGS) {
         mgr.printPendingTasks();
         return EXIT_SUCCESS;
       }
-
-      // 3) otherwise, check if arg is help or a filter
+      // Otherwise, check if arg is help or a filter
       string_view filter{argv[2]};
       if (filter == "help") {
         printListHelp();
@@ -172,19 +172,16 @@ int TaskCLI::run(int argc, char *argv[]) {
         return EXIT_FAILURE;
       }
     } else if (cmd == "remove") {
-      // 2) Check for invalid usage
       if (argc < ADD_MIN_ARGS) {
         cerr << BLOOD << FAIL << " Removing a task requires at least 1 argument. None provided." << RESET << endl;
         return EXIT_FAILURE;
       }
-
-      // 3) Asking for help only
       if (strcasecmp(argv[TASK_ID_IDX], "help") == 0) {
         printRemoveHelp();
         return EXIT_FAILURE;
       }
 
-      // 4) Extract ID and remove
+      // Extract ID and remove
       int id = atoi(argv[TASK_ID_IDX]);
       if (id == 0 || !mgr.removeTask(id)) {
         return EXIT_FAILURE;
@@ -194,28 +191,19 @@ int TaskCLI::run(int argc, char *argv[]) {
              << endl;
       }
 
-      // 5) Save the updated task list back to disk
-      try {
-        mgr.saveToFile("tasks.json");
-      } catch (const exception &e) {
-        cerr << "Error: failed to save tasks.json (" << e.what() << ")\n";
-        return EXIT_FAILURE;
-      }
+      mgr.saveToFile("tasks.json");
       return EXIT_SUCCESS;
     } else if (cmd == "archive") {
-      // 2) Check for invalid usage
       if (argc < ADD_MIN_ARGS) {
         cerr << BLOOD << FAIL << " Archiving a task requires at least 1 argument. None provided." << RESET << endl;
         return EXIT_FAILURE;
       }
-
-      // 3) Asking for help only
       if (strcasecmp(argv[TASK_ID_IDX], "help") == 0) {
         printArchiveHelp();
         return EXIT_FAILURE;
       }
 
-      // 4) Extract ID and remove
+      // Extract ID and remove
       int id = atoi(argv[TASK_ID_IDX]);
       if (id == 0 || !mgr.archiveTask(id)) {
         return EXIT_FAILURE;
@@ -225,13 +213,7 @@ int TaskCLI::run(int argc, char *argv[]) {
              << endl;
       }
 
-      // 5) Save the updated task list back to disk
-      try {
-        mgr.saveToFile("tasks.json");
-      } catch (const exception &e) {
-        cerr << "Error: failed to save tasks.json (" << e.what() << ")\n";
-        return EXIT_FAILURE;
-      }
+      mgr.saveToFile("tasks.json");
       return EXIT_SUCCESS;
     } else if (cmd == "help") {
       printHelp();
