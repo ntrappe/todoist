@@ -10,7 +10,7 @@ A simple command-line to-do list manager written in modern C++20. It stores task
 - Persistent storage to tasks.json using JSON format.
 
 ## Setup & Build
-Ensure you have CMake and a C++20-compatible compiler installed. [^1]
+Ensure you have CMake and a C++20-compatible compiler installed.
 ```ruby
 # From project root:
 rm -rf build
@@ -27,6 +27,10 @@ You can also run the tests locally:
 ```ruby
 build/unit_tests
 ```
+## Examples
+![Running commands help and add with multiple parameter options](public/first_commands.png)
+![Running commands list, complete, and archive ](public/middle_commands.png)
+![Running commands list, remove (with fail) and add help](public/final_commands.png)
 
 ## Usage
 ### add
@@ -73,11 +77,6 @@ Without arguments, prints overall help.
 
 - `todo help add` prints add-specific usage.
 
-## Examples
-![Running commands help and add with multiple parameter options](public/first_commands.png)
-![Running commands list, complete, and archive ](public/middle_commands.png)
-![Running commands list, remove (with fail) and add help](public/final_commands.png)
-
 ## Implementation Details
 - **Storage:** Tasks are stored in an `unordered_map<int, std::unique_ptr<Task>>` (task_map) for O(1) lookup by ID.
 - **Ordering:** A `priority_queue<Task*, vector<Task*>, TaskComparator>` holds raw pointers into task_map so tasks can be listed by due date and priority without copying. Tasks are sorted based on scores computed from their assigned priority + distance from due date. Overdue items are moved higher up on the list.
@@ -88,7 +87,7 @@ Without arguments, prints overall help.
 - **Interactive CLI:** User can run the program and execute multiple commands instead of relying on one-shot mode.
 - **Remove All:** Instead of just removing one task at a time, this would support `todo remove --all`. Would ask user to confirm the action first.
 - **Edit Task:** Instead of just removing tasks, they could modify its date, priority, etc.
-- **Advanced Input Handling:** Right now, we make a lot of assumptions about how input is passed to the program. In the future, more advanced parsing and more input options would be great. For example, you have to pass in a date as YYYY-MM-DD when it would be cool to also support `May 23, 2000`.
+- **Advanced Input Handling:** Right now, we make a lot of assumptions about how input is passed to the program. In the future, more advanced parsing and more input options would be great. For example, you have to pass in a date as `YYYY-MM-DD` when it would be cool to also support `May 23, 2000`.
 - **Command-Line Interface:** Given more time, I'd also play around with other ways of displaying the information about the tasks.
 
 ## Tips
